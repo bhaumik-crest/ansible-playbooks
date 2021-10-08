@@ -1,0 +1,11 @@
+- name: Curl openstack server
+  hosts: openstack
+  tasks:
+    - name: Curl nginx server
+      uri:
+        url: http://10.20.20.226
+        return_content: yes
+      register: result
+    - name: Print content
+      debug:
+        msg: "{{ result.content }}"

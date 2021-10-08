@@ -3,7 +3,7 @@
   tasks:
     - name: Curl nginx server
       uri:
-        url: http://10.20.20.226
+        url: http://10.20.20.144
         return_content: yes
       register: result
     - name: Print content

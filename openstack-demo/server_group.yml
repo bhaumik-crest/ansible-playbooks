@@ -1,0 +1,49 @@
+---
+- name: launch a compute instance
+  hosts: openstack
+  vars:
+    instance_name: vm1
+    network_name: test
+  tasks:
+    # - name: Source rc file
+    #   ansible.builtin.shell: . /home/bhaumikj/microstack.rc
+
+      - name: Create server group
+        os_server_group:
+          state: present
+          auth:
+            auth_url: "{{ auth_url }}"
+            username: "{{ username }}"
+            password: "{{ password }}"
+            project_name: "{{ project_name }}"
+            project_domain_name: "{{ project_domain_name }}"
+            user_domain_name: "{{ user_domain_name }}"
+          name: my_server_group
+          policies:
+            - affinity
+        register: server_group
+
+      - name: launch an instance
+        os_server:
+          auth:
+            auth_url: "{{ auth_url }}"
+            username: "{{ username }}"
+            password: "{{ password }}"
+            project_name: "{{ project_name }}"
+            project_domain_name: "{{ project_domain_name }}"
+            user_domain_name: "{{ user_domain_name }}"
+          name: "{{ instance_name }}"
+          state: present
+          image: "ubuntu-mini"
+          flavor: 2
+          key_name: "microstack"
+          network: "{{ network_name }}"
+          scheduler_hints:
+            group: "{{ server_group.id }}"
+            # group: "7df847be-3267-4377-98d2-aa3aea72b96c"
+          userdata: |
+            {%- raw -%}#!/bin/bash
+            sudo apt-get update
+            sudo apt-get -y install nginx
+            sudo service nginx start
+            {% endraw %}

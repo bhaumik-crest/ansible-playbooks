@@ -1,0 +1,72 @@
+---
+- name: create volume and boot instance
+  hosts: openstack
+  vars:
+    instance_name: mysql-server
+    network_name: test
+  tasks:
+    # - name: Source rc file
+    #   ansible.builtin.shell: . /home/bhaumikj/microstack.rc
+
+    - name: create volume
+      os_volume:
+        auth:
+          auth_url: "{{ auth_url }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          project_name: "{{ project_name }}"
+          project_domain_name: "{{ project_domain_name }}"
+          user_domain_name: "{{ user_domain_name }}"
+        display_name: "mysql-vol"
+        state: present
+        availability_zone: nova
+        size: 10
+
+    - name: launch an instance
+      os_server:
+        auth:
+          auth_url: "{{ auth_url }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          project_name: "{{ project_name }}"
+          project_domain_name: "{{ project_domain_name }}"
+          user_domain_name: "{{ user_domain_name }}"
+        name: "{{ instance_name }}"
+        state: present
+        image: "ubuntu-mini"
+        flavor: 2
+        key_name: "test-key"
+        network: "{{ network_name }}"
+        userdata: |
+          {%- raw -%}#!/bin/bash
+          sudo apt-get update
+          sudo apt-get install mysql-server
+          {% endraw %}
+
+    - name: Attach Volume
+      os_server_volume:
+        auth:
+          auth_url: "{{ auth_url }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          project_name: "{{ project_name }}"
+          project_domain_name: "{{ project_domain_name }}"
+          user_domain_name: "{{ user_domain_name }}"
+        state: present
+        server: mysql-server
+        volume: mysql-vol
+        device: /dev/vdb
+        
+    - name: create volume snapshot
+      os_volume_snapshot:
+        auth:
+          auth_url: "{{ auth_url }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          project_name: "{{ project_name }}"
+          project_domain_name: "{{ project_domain_name }}"
+          user_domain_name: "{{ user_domain_name }}"
+        display_name: "mysql-snapshot"
+        volume: "mysql-vol"
+        state: present
+        availability_zone: nova
